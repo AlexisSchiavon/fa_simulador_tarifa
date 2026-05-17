@@ -1,4 +1,8 @@
+import os
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+PORT = int(os.getenv("PORT", 8000))
 
 
 class Settings(BaseSettings):
@@ -9,6 +13,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./hyperred.db"
     log_level: str = "INFO"
     timezone: str = "America/Mexico_City"
+    port: int = PORT
 
     # Capacidad estándar de autobús FA
     bus_capacity: int = 45
