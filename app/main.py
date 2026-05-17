@@ -153,3 +153,11 @@ async def server_error_handler(request: StarletteRequest, exc):
     if _is_html_page(request.url.path):
         return templates.TemplateResponse(request, "500.html", status_code=500)
     return JSONResponse({"detail": "Error interno del servidor"}, status_code=500)
+
+
+if __name__ == "__main__":
+    import os
+
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port)
