@@ -111,12 +111,7 @@ async def presentacion_page(request: Request):
 # ── Health check ──────────────────────────────────────────────────────────
 @app.get("/health", tags=["sistema"])
 async def health_check():
-    return {
-        "status": "ok",
-        "app": settings.app_name,
-        "env": settings.app_env,
-        "version": "0.1.0",
-    }
+    return {"status": "ok"}
 
 
 # ── Favicon ────────────────────────────────────────────────────────────────
