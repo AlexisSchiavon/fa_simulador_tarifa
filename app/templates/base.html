@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.ico" type="image/svg+xml">
+    <title>{% block title %}Hyperred FA Sandbox{% endblock %}</title>
+
+    <!-- Tailwind CSS vía CDN (en prod se compilaría) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        fa: {
+                            amarillo: '#FFB800',
+                            oscuro:   '#1F2937',
+                            fondo:    '#FAFAF7',
+                            surface:  '#FFFFFF',
+                            borde:    '#E5E5E0',
+                            texto:    '#1F2937',
+                            muted:    '#6B7280',
+                        },
+                        clase: {
+                            E: '#378ADD',
+                            S: '#639922',
+                            P: '#BA7517',
+                            X: '#D85A30',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.12" crossorigin="anonymous"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js" charset="utf-8"></script>
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: #FAFAF7; }
+        .clase-E { color: #378ADD; }
+        .clase-S { color: #639922; }
+        .clase-P { color: #BA7517; }
+        .clase-X { color: #D85A30; }
+        .badge-E { background: #EBF4FF; color: #378ADD; border: 1px solid #378ADD; }
+        .badge-S { background: #F0F7E6; color: #639922; border: 1px solid #639922; }
+        .badge-P { background: #FEF7E8; color: #BA7517; border: 1px solid #BA7517; }
+        .badge-X { background: #FEF0EA; color: #D85A30; border: 1px solid #D85A30; }
+        .htmx-indicator { display: none; }
+        .htmx-request .htmx-indicator { display: inline-block; }
+        .htmx-request.htmx-indicator { display: inline-block; }
+        [x-cloak] { display: none !important; }
+    </style>
+
+    {% block head_extra %}{% endblock %}
+</head>
+<body class="h-full text-fa-texto">
+
+<!-- Barra de navegación -->
+<nav class="bg-fa-oscuro border-b border-gray-700 sticky top-0 z-50">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-14">
+            <!-- Logo + nombre -->
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-fa-amarillo rounded-md flex items-center justify-center">
+                    <span class="text-fa-oscuro font-bold text-sm">FA</span>
+                </div>
+                <div>
+                    <span class="text-white font-semibold text-sm tracking-tight">Hyperred FA</span>
+                    <span class="text-gray-400 text-xs ml-2">Sandbox</span>
+                </div>
+            </div>
+
+            <!-- Navegación principal -->
+            <div class="flex items-center gap-1">
+                <a href="/dashboard"
+                   class="{% if active_page == 'dashboard' %}bg-gray-700 text-white{% else %}text-gray-300 hover:text-white hover:bg-gray-700{% endif %} px-3 py-1.5 rounded-md text-sm font-medium transition-colors">
+                    Dashboard
+                </a>
+                <a href="/simulador"
+                   class="{% if active_page == 'simulador' %}bg-gray-700 text-white{% else %}text-gray-300 hover:text-white hover:bg-gray-700{% endif %} px-3 py-1.5 rounded-md text-sm font-medium transition-colors">
+                    Simulador
+                </a>
+                <a href="/comparador"
+                   class="{% if active_page == 'comparador' %}bg-gray-700 text-white{% else %}text-gray-300 hover:text-white hover:bg-gray-700{% endif %} px-3 py-1.5 rounded-md text-sm font-medium transition-colors">
+                    Comparador
+                </a>
+                <a href="/escenarios"
+                   class="{% if active_page == 'escenarios' %}bg-gray-700 text-white{% else %}text-gray-300 hover:text-white hover:bg-gray-700{% endif %} px-3 py-1.5 rounded-md text-sm font-medium transition-colors">
+                    Escenarios
+                </a>
+                <a href="/presentacion"
+                   class="ml-2 bg-fa-amarillo text-fa-oscuro px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-yellow-400 transition-colors">
+                    ▶ Presentación
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Contenido principal -->
+<main class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    {% block content %}{% endblock %}
+</main>
+
+<!-- Footer -->
+<footer class="border-t border-fa-borde mt-8 py-4">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p class="text-center text-fa-muted text-xs">
+            GENIE S.C. × Lumixia · Proyecto Hyperred 25061 · 2026
+        </p>
+    </div>
+</footer>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

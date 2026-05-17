@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperred FA — Modo Presentación</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: {
+                fa: { amarillo:'#FFB800', oscuro:'#1F2937', fondo:'#0D1520', surface:'#162030', borde:'#1E3048', texto:'#F1F5F9', muted:'#94A3B8' },
+                clase: { E:'#60A5FA', S:'#4ADE80', P:'#FCD34D', X:'#F87171' }
+            }}}
+        }
+    </script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js" charset="utf-8"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family:'Inter',sans-serif; background:#0D1520; color:#F1F5F9; }
+        [x-cloak] { display:none !important; }
+        .slide-in { animation: slideIn 0.4s ease forwards; }
+        @keyframes slideIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        .pulse-price { animation: pricePop 0.25s ease; }
+        @keyframes pricePop { 0%{transform:scale(1)} 50%{transform:scale(1.06)} 100%{transform:scale(1)} }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+<div x-data="presentacion()" x-init="init()" x-cloak class="h-full flex flex-col">
+
+    <!-- Header -->
+    <header class="flex-none px-8 py-3 flex items-center justify-between border-b border-fa-borde bg-fa-surface">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-fa-amarillo rounded-lg flex items-center justify-center flex-shrink-0">
+                <span class="text-fa-oscuro font-black text-sm">FA</span>
+            </div>
+            <div>
+                <p class="text-white font-bold text-base leading-tight">Hyperred FA Sandbox</p>
+                <p class="text-fa-muted text-xs">Simulador de Tarificación Dinámica Híbrida</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2">
+                <template x-for="(titulo, i) in actoTitulos" :key="i">
+                    <button @click="irActo(i)"
+                            class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all"
+                            :class="i === acto ? 'bg-fa-amarillo text-fa-oscuro font-bold' : 'text-fa-muted hover:text-white'">
+                        <span x-text="i + 1 + '.'"></span>
+                        <span x-text="titulo"></span>
+                    </button>
+                </template>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-fa-muted border-l border-fa-borde pl-4">
+                <span x-show="corriendo" class="text-green-400">▶ Auto</span>
+                <span x-show="!corriendo" class="text-yellow-400">⏸ Pausado</span>
+            </div>
+            <a href="/dashboard" class="text-fa-muted hover:text-white text-sm transition-colors ml-2">✕</a>
+        </div>
+    </header>
+
+    <!-- Contenido principal -->
+    <main class="flex-1 min-h-0 px-8 py-5 flex flex-col">
+
+        <!-- ── ACTO 1: Llenado del bus ── -->
+        <div x-show="acto === 0" class="flex-1 min-h-0 flex flex-col slide-in">
+            <div class="mb-4">
+                <h2 class="text-3xl font-extrabold text-white">El precio sube con la ocupación</h2>
+                <p class="text-fa-muted text-sm mt-1">Factor f_ocu — tarifa base $380 · Ruta León → Querétaro</p>
+            </div>
+            <div class="grid grid-cols-3 gap-5 flex-1 min-h-0">
+                <div class="col-span-2 min-h-0">
+                    <div id="chart-acto1" class="h-full" style="min-height:240px"></div>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <div class="bg-fa-surface border border-fa-borde rounded-xl p-5 text-center">
+                        <p class="text-fa-muted text-xs uppercase tracking-wide mb-1">Asientos vendidos</p>
+                        <p class="text-6xl font-black text-fa-amarillo" x-text="ocupados_a1"></p>
+                        <p class="text-fa-muted text-sm">de 45</p>
+                        <div class="w-full bg-gray-800 rounded-full h-2 mt-3">
+                            <div class="h-2 rounded-full bg-fa-amarillo transition-all duration-500"
+                                 :style="'width:' + (ocupados_a1/45*100) + '%'"></div>
+                        </div>
+                    </div>
+                    <div class="bg-fa-surface border border-fa-borde rounded-xl p-5 text-center">
+                        <p class="text-fa-muted text-xs uppercase tracking-wide mb-1">Precio actual</p>
+                        <p class="text-4xl font-black text-white transition-all" x-text="'$' + precio_a1.toLocaleString('es-MX',{maximumFractionDigits:0})"></p>
+                        <p class="text-fa-muted text-xs mt-1" x-text="'×' + mult_a1.toFixed(3) + ' multiplicador'"></p>
+                    </div>
+                    <div class="bg-fa-surface border border-fa-borde rounded-xl p-5 text-center">
+                        <p class="text-fa-muted text-xs uppercase tracking-wide mb-1">Clase tarifaria</p>
+                        <p class="text-5xl font-black"
+                           :class="{'text-clase-E':clase_a1==='E','text-clase-S':clase_a1==='S','text-clase-P':clase_a1==='P','text-clase-X':clase_a1==='X'}"
+                           x-text="clase_a1 || '—'"></p>
+                        <p class="text-fa-muted text-xs mt-1"
+                           x-text="{'E':'Económica','S':'Estándar','P':'Plus','X':'Ejecutiva'}[clase_a1] || ''"></p>
+                    </div>
+                </div>
+            </div>
+            <!-- Mini mapa de asientos -->
+            <div class="mt-3 bg-fa-surface border border-fa-borde rounded-lg p-3">
+                <div class="grid gap-1" style="grid-template-columns: repeat(15, 1fr)">
+                    <template x-for="n in 45" :key="n">
+                        <div class="aspect-square rounded-sm flex items-center justify-center text-xs font-bold transition-all duration-300"
+                             :class="n <= ocupados_a1 ? asientoClassA1(n) : 'bg-gray-800 border border-gray-700'">
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── ACTO 2: Descuento último momento ── -->
+        <div x-show="acto === 1" class="flex-1 min-h-0 flex flex-col slide-in">
+            <div class="mb-5">
+                <h2 class="text-3xl font-extrabold text-white">Descuento de Último Momento (f_lix)</h2>
+                <p class="text-fa-muted text-sm mt-1">Cuando el bus parte con asientos vacíos — estrategia Flixbus</p>
+            </div>
+            <div class="grid grid-cols-2 gap-6 flex-1 min-h-0">
+                <div class="bg-fa-surface border border-fa-borde rounded-2xl p-8 flex flex-col items-center justify-center">
+                    <p class="text-fa-muted text-sm mb-3">Sin descuento (tarifa base × f_ant alto)</p>
+                    <p class="text-5xl font-black text-fa-muted line-through mb-6" x-text="'$' + flix_sin.toLocaleString('es-MX',{maximumFractionDigits:0})"></p>
+                    <p class="text-fa-muted text-sm mb-2">Con f_lix activo (−28%)</p>
+                    <p class="text-7xl font-black text-clase-E" x-text="'$' + flix_con.toLocaleString('es-MX',{maximumFractionDigits:0})"></p>
+                    <div class="mt-6 px-6 py-3 bg-clase-E bg-opacity-10 border border-clase-E border-opacity-30 rounded-xl text-center">
+                        <p class="text-clase-E font-bold text-lg">f_lix = 0.72</p>
+                        <p class="text-fa-muted text-xs mt-0.5">y f_ant se anula = 1.00</p>
+                    </div>
+                </div>
+                <div class="bg-fa-surface border border-fa-borde rounded-2xl p-8 flex flex-col justify-center gap-5">
+                    <p class="text-fa-muted text-sm font-medium">Condiciones de activación</p>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 bg-green-500 text-white">✓</div>
+                            <div>
+                                <p class="font-semibold text-white text-sm">Mismo día de salida (A = 0)</p>
+                                <p class="text-fa-muted text-xs">Menos de 4 horas para abordaje</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 bg-green-500 text-white">✓</div>
+                            <div>
+                                <p class="font-semibold text-white text-sm">Ocupación &lt; 60%</p>
+                                <p class="text-fa-muted text-xs">El bus tiene capacidad disponible</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 bg-fa-amarillo text-fa-oscuro">⚡</div>
+                            <div>
+                                <p class="font-semibold text-white text-sm">Ambas → f_lix activo</p>
+                                <p class="text-fa-muted text-xs">Override: f_ant se neutraliza (= 1.0)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2 p-4 bg-gray-900 rounded-xl">
+                        <p class="text-fa-muted text-xs font-medium mb-2">Modelo Flixbus puro usa 0.65 (más agresivo)</p>
+                        <p class="text-white text-sm">El <span class="text-fa-amarillo font-bold">Híbrido FA</span> usa 0.72 — recupera parte de los ingresos mientras llena el bus</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── ACTO 3: Comparación final ── -->
+        <div x-show="acto === 2" class="flex-1 min-h-0 flex flex-col slide-in">
+            <div class="mb-4">
+                <h2 class="text-3xl font-extrabold text-white">Resultado: Híbrido FA supera a los modelos puros</h2>
+                <p class="text-fa-muted text-sm mt-1">
+                    Misma secuencia · 20 boletos · Ruta R1 León → Querétaro ·
+                    <span x-show="cargando_comp" class="text-fa-amarillo">calculando...</span>
+                    <span x-show="!cargando_comp" class="text-green-400">datos reales del motor</span>
+                </p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 mb-4">
+                <template x-for="m in modelos_comp" :key="m.key">
+                    <div class="rounded-xl p-5 border transition-all"
+                         :class="m.key === 'hibrido' ? 'bg-fa-amarillo bg-opacity-10 border-fa-amarillo' : 'bg-fa-surface border-fa-borde'">
+                        <p class="text-fa-muted text-xs mb-2" x-text="m.label"></p>
+                        <p class="text-4xl font-black mb-1"
+                           :class="m.key === 'hibrido' ? 'text-fa-amarillo' : 'text-fa-muted'"
+                           x-text="'$' + (m.total||0).toLocaleString('es-MX',{maximumFractionDigits:0})"></p>
+                        <div class="flex items-center gap-2 mt-2">
+                            <p class="text-xs text-fa-muted"
+                               x-text="'$' + (m.boletos||0).toLocaleString('es-MX',{maximumFractionDigits:0}) + ' boletos'"></p>
+                            <span class="text-fa-muted">+</span>
+                            <p class="text-xs text-fa-muted"
+                               x-text="'$' + (m.servicios||0).toLocaleString('es-MX',{maximumFractionDigits:0}) + ' srv'"></p>
+                        </div>
+                        <p class="text-xs mt-2 font-semibold"
+                           :class="m.key === 'hibrido' ? 'text-fa-amarillo' : 'text-green-400'"
+                           x-show="m.key === 'hibrido'">← Máximo ingreso</p>
+                        <p class="text-xs mt-2 font-medium text-fa-muted"
+                           x-show="m.key !== 'hibrido' && modelos_comp.find(x=>x.key==='hibrido')?.total > 0"
+                           x-text="'Híbrido genera $' + Math.round(modelos_comp.find(x=>x.key==='hibrido').total - m.total).toLocaleString('es-MX') + ' más'"></p>
+                    </div>
+                </template>
+            </div>
+
+            <div class="flex-1 min-h-0" style="min-height:180px">
+                <div id="chart-acto3" class="h-full"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer / controles -->
+    <footer class="flex-none px-8 py-3 border-t border-fa-borde bg-fa-surface flex items-center justify-between">
+        <div class="text-xs text-fa-muted flex items-center gap-3">
+            <kbd class="bg-gray-700 px-2 py-0.5 rounded text-xs font-mono">Espacio</kbd> pausar
+            <kbd class="bg-gray-700 px-2 py-0.5 rounded text-xs font-mono">→</kbd> siguiente
+            <kbd class="bg-gray-700 px-2 py-0.5 rounded text-xs font-mono">←</kbd> anterior
+        </div>
+        <div class="flex items-center gap-3">
+            <button @click="actoAnterior()" :disabled="acto === 0"
+                    class="text-sm text-fa-muted hover:text-white disabled:opacity-30 px-4 py-1.5 border border-fa-borde rounded-lg transition-colors">
+                ← Anterior
+            </button>
+            <button @click="actoSiguiente()"
+                    class="text-sm font-semibold px-5 py-1.5 rounded-lg transition-all active:scale-95"
+                    :class="acto < 2 ? 'bg-fa-amarillo text-fa-oscuro hover:bg-yellow-400' : 'bg-white text-fa-oscuro hover:bg-gray-100'">
+                <span x-text="acto < 2 ? 'Siguiente →' : '↺ Reiniciar'"></span>
+            </button>
+        </div>
+        <p class="text-xs text-fa-muted">GENIE S.C. × Lumixia · Hyperred 25061 · 2026</p>
+    </footer>
+</div>
+
+<script>
+function presentacion() {
+    return {
+        acto: 0,
+        corriendo: true,
+        actoTitulos: ['Ocupación', 'Último Momento', 'Comparación'],
+
+        // Acto 1
+        ocupados_a1: 0,
+        precio_a1: 380,
+        mult_a1: 1.0,
+        clase_a1: 'E',
+        serie_nums_a1: [],
+        serie_precios_a1: [],
+        clases_a1: [],
+        _intervalo: null,
+
+        // Acto 2
+        flix_sin: 627,   // 380 × 1.65
+        flix_con: 274,   // 380 × 0.72
+
+        // Acto 3
+        cargando_comp: false,
+        modelos_comp: [
+            {key:'aviacion', label:'✈ Aviación Puro', total:0, boletos:0, servicios:0, serie:[]},
+            {key:'flixbus',  label:'🚌 Flixbus Puro',  total:0, boletos:0, servicios:0, serie:[]},
+            {key:'hibrido',  label:'⭐ Híbrido FA',    total:0, boletos:0, servicios:0, serie:[]},
+        ],
+
+        init() {
+            document.addEventListener('keydown', e => {
+                if (e.code === 'Space')      { e.preventDefault(); this.corriendo = !this.corriendo; }
+                if (e.code === 'ArrowRight') this.actoSiguiente();
+                if (e.code === 'ArrowLeft')  this.actoAnterior();
+            });
+            this._iniciarActo1();
+        },
+
+        irActo(n) {
+            clearInterval(this._intervalo);
+            this.acto = n;
+            if (n === 0) this._iniciarActo1();
+            if (n === 1) { /* estático */ }
+            if (n === 2) this._iniciarActo3();
+        },
+
+        actoSiguiente() {
+            clearInterval(this._intervalo);
+            if (this.acto < 2) {
+                this.acto++;
+                if (this.acto === 1) { /* estático */ }
+                if (this.acto === 2) this._iniciarActo3();
+            } else {
+                this.acto = 0;
+                this._iniciarActo1();
+            }
+        },
+
+        actoAnterior() {
+            clearInterval(this._intervalo);
+            if (this.acto > 0) {
+                this.acto--;
+                if (this.acto === 0) this._iniciarActo1();
+            }
+        },
+
+        // Acto 1: animación de llenado con pricing engine real
+        _iniciarActo1() {
+            this.ocupados_a1 = 0;
+            this.precio_a1 = 380;
+            this.mult_a1 = 1.0;
+            this.clase_a1 = 'E';
+            this.serie_nums_a1 = [];
+            this.serie_precios_a1 = [];
+            this.clases_a1 = [];
+            this.corriendo = true;
+            this.$nextTick(() => this._renderActo1());
+
+            clearInterval(this._intervalo);
+            const step = async () => {
+                if (!this.corriendo) return;
+                if (this.ocupados_a1 >= 40) { clearInterval(this._intervalo); return; }
+                this.ocupados_a1++;
+                try {
+                    const ocu = this.ocupados_a1 / 45;
+                    const p = new URLSearchParams({tarifa_base:380, ocupacion:ocu, dias_anticipacion:10, nivel_demanda:'alta', segmento:'ocio', modelo:'hibrido'});
+                    const r = await fetch('/api/simulador/calcular?' + p);
+                    if (r.ok) {
+                        const d = await r.json();
+                        this.precio_a1 = d.precio;
+                        this.mult_a1 = d.multiplicador;
+                        this.clase_a1 = d.clase;
+                        this.serie_nums_a1.push(this.ocupados_a1);
+                        this.serie_precios_a1.push(d.precio);
+                        this.clases_a1.push(d.clase);
+                        this._renderActo1();
+                    }
+                } catch(e) {
+                    // fallback sin API
+                    const precio = Math.round(380 * this._fOcu(this.ocupados_a1 / 45) * 0.95);
+                    this.precio_a1 = precio;
+                    this.mult_a1 = precio / 380;
+                    this.clase_a1 = this._clase(this.mult_a1);
+                    this.serie_nums_a1.push(this.ocupados_a1);
+                    this.serie_precios_a1.push(precio);
+                    this.clases_a1.push(this.clase_a1);
+                    this._renderActo1();
+                }
+            };
+            this._intervalo = setInterval(step, 500);
+        },
+
+        _renderActo1() {
+            const colores = this.clases_a1.map(c => ({'E':'#60A5FA','S':'#4ADE80','P':'#FCD34D','X':'#F87171'}[c]||'#94A3B8'));
+            Plotly.react('chart-acto1', [{
+                x: this.serie_nums_a1,
+                y: this.serie_precios_a1,
+                mode: 'lines+markers',
+                line: {color:'#FFB800', width:3},
+                marker: {color:colores, size:9, line:{color:'#0D1520',width:1.5}},
+                hovertemplate:'Boleto #%{x}<br>$%{y:,.0f}<extra></extra>',
+            }], {
+                margin:{t:10,r:10,b:40,l:75},
+                xaxis:{title:'Asiento vendido',tickfont:{size:11,color:'#94A3B8'},gridcolor:'#1E3048',zerolinecolor:'#1E3048'},
+                yaxis:{title:'Precio MXN',tickformat:',.0f',tickfont:{size:11,color:'#94A3B8'},gridcolor:'#1E3048',zerolinecolor:'#1E3048'},
+                plot_bgcolor:'#162030', paper_bgcolor:'#162030',
+                font:{color:'#94A3B8'},
+            }, {responsive:true, displayModeBar:false});
+        },
+
+        // Acto 3: datos reales del comparador
+        async _iniciarActo3() {
+            this.cargando_comp = true;
+            try {
+                const r = await fetch('/api/comparador/generar', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ruta_id:'R1', tarifa_base:380, num_boletos:20, nivel_demanda:'alta', dias_hasta_salida:30}),
+                });
+                if (r.ok) {
+                    const data = await r.json();
+                    this.modelos_comp = [
+                        {key:'aviacion', label:'✈ Aviación Puro',  total:data.aviacion.ingreso_total+data.aviacion.ingreso_servicios,  boletos:data.aviacion.ingreso_boletos,  servicios:data.aviacion.ingreso_servicios,  serie:data.aviacion.serie_precios},
+                        {key:'flixbus',  label:'🚌 Flixbus Puro',   total:data.flixbus.ingreso_total+data.flixbus.ingreso_servicios,   boletos:data.flixbus.ingreso_boletos,   servicios:data.flixbus.ingreso_servicios,   serie:data.flixbus.serie_precios},
+                        {key:'hibrido',  label:'⭐ Híbrido FA',     total:data.hibrido.ingreso_total+data.hibrido.ingreso_servicios,   boletos:data.hibrido.ingreso_boletos,   servicios:data.hibrido.ingreso_servicios,   serie:data.hibrido.serie_precios},
+                    ];
+                    this.$nextTick(() => this._renderActo3());
+                }
+            } catch(e) {
+                console.error(e);
+            } finally {
+                this.cargando_comp = false;
+            }
+        },
+
+        _renderActo3() {
+            const avSerie = this.modelos_comp.find(m=>m.key==='aviacion')?.serie || [];
+            const flSerie = this.modelos_comp.find(m=>m.key==='flixbus')?.serie || [];
+            const hySerie = this.modelos_comp.find(m=>m.key==='hibrido')?.serie || [];
+            const xs = avSerie.map((_,i)=>i+1);
+            Plotly.react('chart-acto3', [
+                {x:xs, y:avSerie, name:'Aviación',  line:{color:'#60A5FA',width:2,dash:'dash'}, mode:'lines+markers', marker:{size:6}},
+                {x:xs, y:flSerie, name:'Flixbus',   line:{color:'#4ADE80',width:2,dash:'dot'},  mode:'lines+markers', marker:{size:6}},
+                {x:xs, y:hySerie, name:'Híbrido FA', line:{color:'#FFB800',width:3},            mode:'lines+markers', marker:{size:8,symbol:'circle',line:{color:'#0D1520',width:1}}},
+            ], {
+                margin:{t:10,r:10,b:40,l:75},
+                xaxis:{title:'Boleto vendido',tickfont:{size:11,color:'#94A3B8'},gridcolor:'#1E3048',zerolinecolor:'#1E3048'},
+                yaxis:{title:'Precio MXN',tickformat:',.0f',tickfont:{size:11,color:'#94A3B8'},gridcolor:'#1E3048',zerolinecolor:'#1E3048'},
+                plot_bgcolor:'#162030', paper_bgcolor:'#162030',
+                legend:{orientation:'h',y:-0.15,font:{color:'#94A3B8',size:11}},
+                font:{color:'#94A3B8'},
+            }, {responsive:true, displayModeBar:false});
+        },
+
+        asientoClassA1(n) {
+            const c = this.clases_a1[n-1];
+            return {'E':'bg-blue-900 border border-blue-500','S':'bg-green-900 border border-green-500','P':'bg-yellow-900 border border-yellow-500','X':'bg-red-900 border border-red-500'}[c] || 'bg-gray-700 border border-gray-600';
+        },
+
+        _fOcu(o) {
+            if (o < 0.4) return 0.85 + (o/0.4)*0.15;
+            if (o < 0.7) return 1.00 + ((o-0.4)/0.3)*0.30;
+            if (o < 0.9) return 1.30 + ((o-0.7)/0.2)*0.35;
+            return 1.65 + ((o-0.9)/0.1)*0.35;
+        },
+
+        _clase(m) {
+            if (m < 1.0) return 'E';
+            if (m < 1.35) return 'S';
+            if (m < 2.0) return 'P';
+            return 'X';
+        },
+    }
+}
+</script>
+</body>
+</html>

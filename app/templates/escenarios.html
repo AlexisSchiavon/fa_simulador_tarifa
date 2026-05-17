@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% set active_page = "escenarios" %}
+
+{% block title %}Escenarios — Hyperred FA Sandbox{% endblock %}
+
+{% block content %}
+<div x-data="escenarios()" x-init="init()" x-cloak>
+
+    <div class="mb-4 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-fa-oscuro">Escenarios Guardados</h1>
+            <p class="text-fa-muted text-sm mt-0.5">Historial de simulaciones para análisis y presentación</p>
+        </div>
+        <a href="/simulador"
+           class="bg-fa-amarillo text-fa-oscuro font-semibold text-sm px-4 py-2 rounded-md hover:bg-yellow-400 transition-colors">
+            + Nueva Simulación
+        </a>
+    </div>
+
+    <div class="bg-white border border-fa-borde rounded-lg overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-fa-borde">
+                <tr>
+                    <th class="text-left px-4 py-3 font-medium text-fa-muted text-xs uppercase">Escenario</th>
+                    <th class="text-left px-4 py-3 font-medium text-fa-muted text-xs uppercase">Modelo</th>
+                    <th class="text-left px-4 py-3 font-medium text-fa-muted text-xs uppercase">Ruta</th>
+                    <th class="text-right px-4 py-3 font-medium text-fa-muted text-xs uppercase">Boletos</th>
+                    <th class="text-right px-4 py-3 font-medium text-fa-muted text-xs uppercase">Ingreso Total</th>
+                    <th class="text-right px-4 py-3 font-medium text-fa-muted text-xs uppercase">Creado</th>
+                    <th class="text-right px-4 py-3 font-medium text-fa-muted text-xs uppercase">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-fa-borde">
+                <template x-for="esc in escenariosList" :key="esc.id">
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-fa-oscuro" x-text="esc.nombre"></div>
+                            <div class="text-xs text-fa-muted" x-text="esc.descripcion || ''"></div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="text-xs px-2 py-0.5 rounded"
+                                  :class="{
+                                      'bg-blue-50 text-blue-700': esc.modelo_principal === 'aviacion',
+                                      'bg-green-50 text-green-700': esc.modelo_principal === 'flixbus',
+                                      'bg-yellow-50 text-yellow-700': esc.modelo_principal === 'hibrido'
+                                  }"
+                                  x-text="esc.modelo_principal"></span>
+                        </td>
+                        <td class="px-4 py-3 text-fa-muted" x-text="esc.ruta_id"></td>
+                        <td class="px-4 py-3 text-right font-medium" x-text="esc.num_boletos"></td>
+                        <td class="px-4 py-3 text-right font-bold text-fa-oscuro"
+                            x-text="'$' + parseFloat(esc.ingreso_total_mxn).toLocaleString('es-MX', {minimumFractionDigits:0, maximumFractionDigits:0})"></td>
+                        <td class="px-4 py-3 text-right text-fa-muted text-xs" x-text="formatFecha(esc.created_at)"></td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a :href="'/api/export/escenario/' + esc.id"
+                                   class="text-xs text-fa-muted hover:text-fa-oscuro" title="Exportar Excel">📊</a>
+                                <button @click="eliminar(esc.id)"
+                                        class="text-xs text-red-400 hover:text-red-600" title="Eliminar">✕</button>
+                            </div>
+                        </td>
+                    </tr>
+                </template>
+                <tr x-show="escenariosList.length === 0">
+                    <td colspan="7" class="px-4 py-12 text-center text-fa-muted">
+                        No hay escenarios guardados. <a href="/simulador" class="text-fa-amarillo hover:underline">Crear uno →</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function escenarios() {
+    return {
+        escenariosList: [],
+
+        async init() {
+            const resp = await fetch('/api/simulador/escenarios');
+            if (resp.ok) this.escenariosList = await resp.json();
+        },
+
+        async eliminar(id) {
+            if (!confirm('¿Eliminar este escenario?')) return;
+            const resp = await fetch(`/api/simulador/escenarios/${id}`, {method: 'DELETE'});
+            if (resp.ok) this.escenariosList = this.escenariosList.filter(e => e.id !== id);
+        },
+
+        formatFecha(iso) {
+            const d = new Date(iso);
+            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+        },
+    }
+}
+</script>
+{% endblock %}

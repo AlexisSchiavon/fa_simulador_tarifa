@@ -1,0 +1,7 @@
+/* Hyperred FA Sandbox — custom overrides */
+:root {
+    --fa-amarillo: #FFB800;
+    --fa-oscuro: #1F2937;
+}
+html { scroll-behavior: smooth; }
+.tabular-nums { font-variant-numeric: tabular-nums; }

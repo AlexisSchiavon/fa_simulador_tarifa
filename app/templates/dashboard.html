@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% set active_page = "dashboard" %}
+
+{% block title %}Dashboard — Hyperred FA Sandbox{% endblock %}
+
+{% block content %}
+<div x-data="dashboard()" x-init="init()" x-cloak>
+
+    <!-- Cabecera -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-fa-oscuro">Dashboard</h1>
+        <p class="text-fa-muted text-sm mt-1">Vista general del corredor León – Querétaro</p>
+    </div>
+
+    <!-- KPIs globales -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white border border-fa-borde rounded-lg p-4">
+            <p class="text-xs text-fa-muted uppercase tracking-wide font-medium">Ingreso Total</p>
+            <p class="text-2xl font-bold text-fa-oscuro mt-1" x-text="'$' + kpis.ingreso_total.toLocaleString('es-MX')">$0</p>
+            <p class="text-xs text-fa-muted mt-1">MXN acumulado</p>
+        </div>
+        <div class="bg-white border border-fa-borde rounded-lg p-4">
+            <p class="text-xs text-fa-muted uppercase tracking-wide font-medium">Boletos Vendidos</p>
+            <p class="text-2xl font-bold text-fa-oscuro mt-1" x-text="kpis.boletos_vendidos.toLocaleString('es-MX')">0</p>
+            <p class="text-xs text-fa-muted mt-1">en todos los escenarios</p>
+        </div>
+        <div class="bg-white border border-fa-borde rounded-lg p-4">
+            <p class="text-xs text-fa-muted uppercase tracking-wide font-medium">Ocupación Promedio</p>
+            <p class="text-2xl font-bold text-fa-oscuro mt-1" x-text="kpis.ocupacion_promedio + '%'">0%</p>
+            <p class="text-xs text-fa-muted mt-1">por viaje activo</p>
+        </div>
+        <div class="bg-white border border-fa-borde rounded-lg p-4">
+            <p class="text-xs text-fa-muted uppercase tracking-wide font-medium">Ing. Servicios</p>
+            <p class="text-2xl font-bold text-fa-oscuro mt-1" x-text="'$' + kpis.ingreso_servicios.toLocaleString('es-MX')">$0</p>
+            <p class="text-xs text-fa-muted mt-1">add-ons Hyperred</p>
+        </div>
+    </div>
+
+    <!-- Rutas + Próximos viajes -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        <!-- Lista de rutas -->
+        <div class="bg-white border border-fa-borde rounded-lg p-4">
+            <h2 class="font-semibold text-fa-oscuro mb-3">Rutas del Corredor</h2>
+            <div class="space-y-2">
+                <template x-for="ruta in rutas" :key="ruta.id">
+                    <button
+                        @click="seleccionarRuta(ruta.id)"
+                        :class="rutaSeleccionada === ruta.id ? 'border-fa-amarillo bg-yellow-50' : 'border-fa-borde hover:border-gray-300'"
+                        class="w-full text-left border rounded-md p-3 transition-colors cursor-pointer">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="font-medium text-sm text-fa-oscuro" x-text="ruta.origen + ' → ' + ruta.destino"></span>
+                                <span class="text-xs text-fa-muted ml-2" x-text="ruta.distancia_km + ' km'"></span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-sm font-semibold text-fa-oscuro" x-text="'$' + ruta.tarifa_base_mxn.toLocaleString('es-MX')"></span>
+                                <div>
+                                    <span class="text-xs px-1.5 py-0.5 rounded"
+                                          :class="{
+                                              'bg-blue-100 text-blue-700': ruta.tipo_servicio === 'Plus',
+                                              'bg-gray-100 text-gray-600': ruta.tipo_servicio === 'Regular',
+                                              'bg-green-100 text-green-700': ruta.tipo_servicio === 'Alimentador'
+                                          }"
+                                          x-text="ruta.tipo_servicio"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                </template>
+            </div>
+
+            <a href="/simulador"
+               class="mt-4 w-full block text-center bg-fa-amarillo text-fa-oscuro font-semibold text-sm py-2 rounded-md hover:bg-yellow-400 transition-colors">
+                Abrir Simulador →
+            </a>
+        </div>
+
+        <!-- Próximos viajes de la ruta seleccionada -->
+        <div class="lg:col-span-2 bg-white border border-fa-borde rounded-lg p-4">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="font-semibold text-fa-oscuro">
+                    Próximos Viajes
+                    <span class="text-fa-muted font-normal text-sm"
+                          x-text="rutaSeleccionada ? '— ' + rutaNombre : '— selecciona una ruta'"></span>
+                </h2>
+                <span class="text-xs text-fa-muted" x-show="viajes.length > 0" x-text="viajes.length + ' viajes'"></span>
+            </div>
+
+            <div x-show="cargando" class="text-center py-8 text-fa-muted text-sm">
+                Cargando viajes...
+            </div>
+
+            <div x-show="!cargando && viajes.length === 0 && rutaSeleccionada" class="text-center py-8 text-fa-muted text-sm">
+                No hay viajes programados para esta ruta.
+            </div>
+
+            <div x-show="!cargando && !rutaSeleccionada" class="text-center py-8 text-fa-muted text-sm">
+                Selecciona una ruta para ver sus viajes.
+            </div>
+
+            <div x-show="!cargando && viajes.length > 0" class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-fa-borde">
+                            <th class="text-left py-2 text-xs font-medium text-fa-muted uppercase">Fecha / Hora</th>
+                            <th class="text-right py-2 text-xs font-medium text-fa-muted uppercase">Ocupación</th>
+                            <th class="text-right py-2 text-xs font-medium text-fa-muted uppercase">Demanda</th>
+                            <th class="text-right py-2 text-xs font-medium text-fa-muted uppercase">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-fa-borde">
+                        <template x-for="viaje in viajes.slice(0, 10)" :key="viaje.id">
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-2.5">
+                                    <span class="font-medium text-fa-oscuro" x-text="formatFecha(viaje.fecha_salida)"></span>
+                                </td>
+                                <td class="py-2.5 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
+                                            <div class="h-1.5 rounded-full transition-all"
+                                                 :class="viaje.ocupacion_pct > 70 ? 'bg-red-400' : viaje.ocupacion_pct > 40 ? 'bg-yellow-400' : 'bg-green-400'"
+                                                 :style="'width: ' + viaje.ocupacion_pct + '%'"></div>
+                                        </div>
+                                        <span class="text-fa-muted text-xs w-10 text-right" x-text="viaje.ocupacion_pct + '%'"></span>
+                                    </div>
+                                </td>
+                                <td class="py-2.5 text-right">
+                                    <span class="text-xs px-2 py-0.5 rounded-full"
+                                          :class="{
+                                              'bg-gray-100 text-gray-600': viaje.nivel_demanda === 'normal',
+                                              'bg-blue-50 text-blue-600': viaje.nivel_demanda === 'valle',
+                                              'bg-orange-50 text-orange-600': viaje.nivel_demanda === 'alta',
+                                              'bg-red-50 text-red-600': viaje.nivel_demanda === 'temporada'
+                                          }"
+                                          x-text="viaje.nivel_demanda"></span>
+                                </td>
+                                <td class="py-2.5 text-right">
+                                    <a :href="'/simulador?viaje_id=' + viaje.id"
+                                       class="text-xs text-fa-amarillo font-medium hover:underline">
+                                        Simular →
+                                    </a>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clases tarifarias — referencia visual -->
+    <div class="mt-4 bg-white border border-fa-borde rounded-lg p-4">
+        <h2 class="font-semibold text-fa-oscuro mb-3">Clases Tarifarias</h2>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="border rounded-md p-3 badge-E">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-lg">E</span>
+                    <span class="text-xs">30% inv.</span>
+                </div>
+                <p class="font-semibold mt-1">Económica</p>
+                <p class="text-xs opacity-75">0.65× – 1.00×</p>
+            </div>
+            <div class="border rounded-md p-3 badge-S">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-lg">S</span>
+                    <span class="text-xs">40% inv.</span>
+                </div>
+                <p class="font-semibold mt-1">Estándar</p>
+                <p class="text-xs opacity-75">1.00× – 1.35×</p>
+            </div>
+            <div class="border rounded-md p-3 badge-P">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-lg">P</span>
+                    <span class="text-xs">20% inv.</span>
+                </div>
+                <p class="font-semibold mt-1">Plus</p>
+                <p class="text-xs opacity-75">1.35× – 2.00×</p>
+            </div>
+            <div class="border rounded-md p-3 badge-X">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-lg">X</span>
+                    <span class="text-xs">10% inv.</span>
+                </div>
+                <p class="font-semibold mt-1">Ejecutiva</p>
+                <p class="text-xs opacity-75">2.00× – 3.50×</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function dashboard() {
+    return {
+        rutas: [],
+        viajes: [],
+        rutaSeleccionada: null,
+        rutaNombre: '',
+        cargando: false,
+        kpis: {
+            ingreso_total: 0,
+            boletos_vendidos: 0,
+            ocupacion_promedio: 0,
+            ingreso_servicios: 0,
+        },
+
+        async init() {
+            await Promise.all([this.cargarRutas(), this.cargarKpis()]);
+            if (this.rutas.length > 0) {
+                this.seleccionarRuta(this.rutas[0].id);
+            }
+        },
+
+        async cargarRutas() {
+            try {
+                const resp = await fetch('/api/rutas/');
+                this.rutas = await resp.json();
+            } catch(e) {
+                console.error('Error cargando rutas:', e);
+            }
+        },
+
+        async cargarKpis() {
+            try {
+                const resp = await fetch('/api/rutas/kpis/global');
+                if (resp.ok) this.kpis = await resp.json();
+            } catch(e) {
+                console.error('Error cargando KPIs:', e);
+            }
+        },
+
+        async seleccionarRuta(id) {
+            this.rutaSeleccionada = id;
+            const ruta = this.rutas.find(r => r.id === id);
+            this.rutaNombre = ruta ? `${ruta.origen} → ${ruta.destino}` : '';
+            this.cargando = true;
+            try {
+                const resp = await fetch(`/api/viajes/?ruta_id=${id}`);
+                this.viajes = await resp.json();
+            } catch(e) {
+                console.error('Error cargando viajes:', e);
+            } finally {
+                this.cargando = false;
+            }
+        },
+
+        formatFecha(iso) {
+            const d = new Date(iso);
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const anio = d.getFullYear();
+            const h = String(d.getHours()).padStart(2, '0');
+            const m = String(d.getMinutes()).padStart(2, '0');
+            return `${dia}/${mes}/${anio} ${h}:${m}`;
+        }
+    }
+}
+</script>
+{% endblock %}
