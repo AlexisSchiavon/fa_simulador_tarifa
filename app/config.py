@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     app_name: str = "Hyperred FA Sandbox"
     app_env: str = "development"
-    database_url: str = "sqlite:///./hyperred.db"
+    database_url: str = os.getenv("DATABASE_URL", "sqlite:////data/hyperred.db")
     log_level: str = "INFO"
     timezone: str = "America/Mexico_City"
     port: int = PORT
