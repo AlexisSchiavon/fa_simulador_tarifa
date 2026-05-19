@@ -62,66 +62,68 @@
     <main class="flex-1 min-h-0 px-8 py-5 flex flex-col">
 
         <!-- ── ACTO 1: Llenado del bus ── -->
-        <div x-show="acto === 0" class="flex-1 min-h-0 flex flex-col slide-in relative">
-            <!-- Tooltip add-on flotante -->
+        <div x-show="acto === 0" class="flex-1 min-h-0 flex flex-col overflow-hidden slide-in">
+            <!-- Tooltip add-on — fixed para no quedar cortado por overflow:hidden -->
             <div x-show="addon_actual"
-                 class="absolute top-16 left-5 z-20 bg-fa-amarillo text-fa-oscuro rounded-xl p-4 shadow-2xl pointer-events-none"
+                 class="fixed top-20 left-10 z-50 bg-fa-amarillo text-fa-oscuro rounded-xl p-3 shadow-2xl pointer-events-none"
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 translate-y-2"
                  x-transition:enter-end="opacity-100 translate-y-0"
                  x-transition:leave="transition ease-in duration-150"
                  x-transition:leave-end="opacity-0">
-                <p class="text-xs font-bold uppercase tracking-wide mb-1">⭐ Add-on vendido</p>
-                <p class="text-base font-black" x-text="addon_actual?.nombre"></p>
-                <p class="text-sm font-bold" x-text="'+ $' + (addon_actual?.precio||0).toLocaleString('es-MX')"></p>
+                <p class="text-xs font-bold uppercase tracking-wide mb-0.5">⭐ Add-on vendido</p>
+                <p class="text-sm font-black" x-text="addon_actual?.nombre"></p>
+                <p class="text-xs font-bold" x-text="'+ $' + (addon_actual?.precio||0).toLocaleString('es-MX')"></p>
             </div>
-            <div class="mb-4">
-                <h2 class="text-3xl font-extrabold text-white">El precio sube con la ocupación</h2>
-                <p class="text-fa-muted text-sm mt-1">Factor f_ocu — tarifa base $380 · Ruta León → Querétaro</p>
+            <div class="mb-1 flex-none">
+                <h2 class="font-extrabold text-white" style="font-size:1.4rem;line-height:1.3">El precio sube con la ocupación</h2>
+                <p class="text-fa-muted mt-0.5" style="font-size:0.8rem">Factor f_ocu — tarifa base $380 · Ruta León → Querétaro</p>
             </div>
-            <div class="grid grid-cols-3 gap-5 flex-1 min-h-0">
+            <div class="grid grid-cols-3 gap-4 flex-1 min-h-0 overflow-hidden">
                 <div class="col-span-2 min-h-0">
-                    <div id="chart-acto1" class="h-full" style="min-height:240px"></div>
+                    <div id="chart-acto1" style="height:45vh;max-height:45vh"></div>
                 </div>
-                <div class="flex flex-col gap-3">
-                    <div class="bg-fa-surface border border-fa-borde rounded-xl p-5 text-center">
-                        <p class="text-fa-muted text-xs uppercase tracking-wide mb-1">Asientos vendidos</p>
-                        <p class="text-6xl font-black text-fa-amarillo" x-text="ocupados_a1"></p>
-                        <p class="text-fa-muted text-sm">de 45</p>
-                        <div class="w-full bg-gray-800 rounded-full h-2 mt-3">
-                            <div class="h-2 rounded-full bg-fa-amarillo transition-all duration-500"
-                                 :style="'width:' + (ocupados_a1/45*100) + '%'"></div>
+                <div class="flex flex-col gap-1.5 overflow-hidden">
+                    <div class="bg-fa-surface border border-fa-borde rounded-lg p-3 text-center flex-none">
+                        <p class="text-fa-muted text-xs uppercase tracking-wide mb-0.5">Asientos vendidos</p>
+                        <p class="text-3xl font-black text-fa-amarillo" x-text="ocupados_a1"></p>
+                        <div class="flex items-center justify-center gap-1">
+                            <p class="text-fa-muted text-xs">de 45</p>
+                            <div class="flex-1 bg-gray-800 rounded-full h-1.5">
+                                <div class="h-1.5 rounded-full bg-fa-amarillo transition-all duration-500"
+                                     :style="'width:' + (ocupados_a1/45*100) + '%'"></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="bg-fa-surface border border-fa-borde rounded-xl p-5 text-center">
-                        <p class="text-fa-muted text-xs uppercase tracking-wide mb-1">Precio actual</p>
-                        <p class="text-4xl font-black text-white transition-all" x-text="'$' + precio_a1.toLocaleString('es-MX',{maximumFractionDigits:0})"></p>
-                        <div class="flex items-center justify-center gap-2 mt-1.5">
-                            <span class="text-xs px-2 py-0.5 rounded font-bold"
+                    <div class="bg-fa-surface border border-fa-borde rounded-lg p-3 text-center flex-none">
+                        <p class="text-fa-muted text-xs uppercase tracking-wide mb-0.5">Precio actual</p>
+                        <p class="text-2xl font-black text-white transition-all" x-text="'$' + precio_a1.toLocaleString('es-MX',{maximumFractionDigits:0})"></p>
+                        <div class="flex items-center justify-center gap-1.5 mt-1">
+                            <span class="text-xs px-1.5 py-0.5 rounded font-bold"
                                   :class="{'E':'bg-blue-900 text-blue-300','S':'bg-green-900 text-green-300','P':'bg-yellow-900 text-yellow-300','X':'bg-red-900 text-red-300'}[clase_a1]"
                                   x-text="'Clase ' + (clase_a1||'—')"></span>
                             <span class="text-fa-muted text-xs" x-text="'×' + mult_a1.toFixed(3)"></span>
                         </div>
                     </div>
-                    <div class="bg-fa-surface border border-fa-borde rounded-xl p-5 text-center">
-                        <p class="text-fa-muted text-xs uppercase tracking-wide mb-1">Clase tarifaria</p>
-                        <p class="text-5xl font-black"
+                    <div class="bg-fa-surface border border-fa-borde rounded-lg p-3 text-center flex-none">
+                        <p class="text-fa-muted text-xs uppercase tracking-wide mb-0.5">Clase tarifaria</p>
+                        <p class="text-2xl font-black"
                            :class="{'text-clase-E':clase_a1==='E','text-clase-S':clase_a1==='S','text-clase-P':clase_a1==='P','text-clase-X':clase_a1==='X'}"
                            x-text="clase_a1 || '—'"></p>
-                        <p class="text-fa-muted text-xs mt-1"
+                        <p class="text-fa-muted text-xs"
                            x-text="{'E':'Económica','S':'Estándar','P':'Plus','X':'Ejecutiva'}[clase_a1] || ''"></p>
                     </div>
-                    <div class="bg-fa-surface border border-opacity-40 rounded-xl p-4 text-center" style="border-color:#FFB800">
-                        <p class="text-fa-muted text-xs uppercase tracking-wide mb-1">Ing. Servicios</p>
-                        <p class="text-2xl font-black text-fa-amarillo"
+                    <div class="bg-fa-surface border border-opacity-40 rounded-lg p-3 text-center flex-none" style="border-color:#FFB800">
+                        <p class="text-fa-muted text-xs uppercase tracking-wide mb-0.5">Ing. Servicios</p>
+                        <p class="text-lg font-black text-fa-amarillo"
                            x-text="'$' + ingreso_servicios_a1.toLocaleString('es-MX',{maximumFractionDigits:0})"></p>
-                        <p class="text-fa-muted text-xs mt-1">add-ons acumulados</p>
+                        <p class="text-fa-muted text-xs">add-ons acumulados</p>
                     </div>
                     <!-- Mapa de asientos -->
-                    <div class="bg-fa-surface border border-fa-borde rounded-xl p-3">
-                        <div class="grid gap-1" style="grid-template-columns: repeat(9, 1fr)">
+                    <div class="bg-fa-surface border border-fa-borde rounded-lg p-2 flex-none">
+                        <div class="grid gap-0.5" style="grid-template-columns:repeat(9,1fr)">
                             <template x-for="n in 45" :key="n">
-                                <div class="aspect-square rounded-sm transition-all duration-300"
+                                <div style="height:12px" class="rounded-sm transition-all duration-300"
                                      :class="n <= ocupados_a1 ? asientoClassA1(n) : 'bg-gray-800 border border-gray-700'">
                                 </div>
                             </template>
