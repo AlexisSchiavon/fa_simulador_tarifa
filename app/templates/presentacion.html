@@ -354,7 +354,7 @@ function presentacion() {
                 this.ocupados_a1++;
                 try {
                     const ocu = this.ocupados_a1 / 45;
-                    const p = new URLSearchParams({tarifa_base:380, ocupacion:ocu, dias_anticipacion:10, nivel_demanda:'alta', segmento:'ocio', modelo:'hibrido', inventario_clases:JSON.stringify(this.inventarioA1)});
+                    const p = new URLSearchParams({tarifa_base:380, ocupacion:ocu, dias_anticipacion:10, nivel_demanda:'normal', segmento:'ocio', modelo:'hibrido', inventario_clases:JSON.stringify(this.inventarioA1)});
                     const r = await fetch('/api/simulador/calcular?' + p);
                     if (r.ok) {
                         const d = await r.json();
