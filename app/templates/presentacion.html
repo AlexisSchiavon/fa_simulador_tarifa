@@ -117,16 +117,16 @@
                            x-text="'$' + ingreso_servicios_a1.toLocaleString('es-MX',{maximumFractionDigits:0})"></p>
                         <p class="text-fa-muted text-xs mt-1">add-ons acumulados</p>
                     </div>
-                </div>
-            </div>
-            <!-- Mini mapa de asientos -->
-            <div class="mt-3 bg-fa-surface border border-fa-borde rounded-lg p-3">
-                <div class="grid gap-1" style="grid-template-columns: repeat(15, 1fr)">
-                    <template x-for="n in 45" :key="n">
-                        <div class="aspect-square rounded-sm flex items-center justify-center text-xs font-bold transition-all duration-300"
-                             :class="n <= ocupados_a1 ? asientoClassA1(n) : 'bg-gray-800 border border-gray-700'">
+                    <!-- Mapa de asientos -->
+                    <div class="bg-fa-surface border border-fa-borde rounded-xl p-3">
+                        <div class="grid gap-1" style="grid-template-columns: repeat(9, 1fr)">
+                            <template x-for="n in 45" :key="n">
+                                <div class="aspect-square rounded-sm transition-all duration-300"
+                                     :class="n <= ocupados_a1 ? asientoClassA1(n) : 'bg-gray-800 border border-gray-700'">
+                                </div>
+                            </template>
                         </div>
-                    </template>
+                    </div>
                 </div>
             </div>
         </div>
@@ -266,6 +266,7 @@ function presentacion() {
         ingreso_servicios_a1: 0,
         addon_actual: null,
         serie_addons_a1: [],
+        inventarioA1: { E: 13, S: 19, P: 9, X: 4 },
         _intervalo: null,
         _ADDONS: [
             {nombre:'Zona Ejecutiva', precio:134},
@@ -340,6 +341,7 @@ function presentacion() {
             this.ingreso_servicios_a1 = 0;
             this.addon_actual = null;
             this.serie_addons_a1 = [];
+            this.inventarioA1 = { E: 13, S: 19, P: 9, X: 4 };
             this.corriendo = true;
             this.$nextTick(() => this._renderActo1());
 
@@ -350,13 +352,14 @@ function presentacion() {
                 this.ocupados_a1++;
                 try {
                     const ocu = this.ocupados_a1 / 45;
-                    const p = new URLSearchParams({tarifa_base:380, ocupacion:ocu, dias_anticipacion:10, nivel_demanda:'alta', segmento:'ocio', modelo:'hibrido'});
+                    const p = new URLSearchParams({tarifa_base:380, ocupacion:ocu, dias_anticipacion:10, nivel_demanda:'alta', segmento:'ocio', modelo:'hibrido', inventario_clases:JSON.stringify(this.inventarioA1)});
                     const r = await fetch('/api/simulador/calcular?' + p);
                     if (r.ok) {
                         const d = await r.json();
                         this.precio_a1 = d.precio;
                         this.mult_a1 = d.multiplicador;
                         this.clase_a1 = d.clase;
+                        if (this.inventarioA1[d.clase] > 0) this.inventarioA1[d.clase]--;
                         this.serie_nums_a1.push(this.ocupados_a1);
                         this.serie_precios_a1.push(d.precio);
                         this.clases_a1.push(d.clase);
