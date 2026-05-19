@@ -1,6 +1,7 @@
 """Endpoints del simulador de tarificación dinámica."""
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime
 
@@ -42,8 +43,15 @@ def calcular_precio_endpoint(
     nivel_demanda: str = Query(default="normal"),
     segmento: str = Query(default="ocio"),
     modelo: str = Query(default="hibrido"),
+    inventario_clases: str | None = Query(default=None),
 ):
     """Calcula el precio dinámico sin persistir (solo consulta)."""
+    inv = None
+    if inventario_clases:
+        try:
+            inv = json.loads(inventario_clases)
+        except (ValueError, TypeError):
+            inv = None
     try:
         resultado = calcular_precio(
             tarifa_base=tarifa_base,
@@ -52,6 +60,7 @@ def calcular_precio_endpoint(
             nivel_demanda=nivel_demanda,
             segmento=segmento,
             modelo=modelo,
+            inventario_clases=inv,
         )
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -78,6 +87,7 @@ def vender_boleto(payload: VenderBoletoRequest, db: Session = Depends(get_db)):
             nivel_demanda=payload.nivel_demanda,
             segmento=payload.segmento,
             modelo=payload.modelo,
+            inventario_clases=payload.inventario_clases,
         )
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))

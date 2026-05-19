@@ -215,6 +215,7 @@ def calcular_precio(
     nivel_demanda: str = "normal",
     segmento: str = "ocio",
     modelo: Modelo = "hibrido",
+    inventario_clases: dict | None = None,
 ) -> ResultadoPrecio:
     """Calcula el precio dinámico según el modelo seleccionado.
 
@@ -299,10 +300,29 @@ def calcular_precio(
         f_lix=f_lix,
     )
 
+    clase = clasificar_boleto(multiplicador_final)
+
+    if inventario_clases is not None:
+        _ORDEN = ["E", "S", "P", "X"]
+        _MIN_MULT = {"S": 1.00, "P": 1.35, "X": 2.00}
+        idx = _ORDEN.index(clase)
+        while idx < len(_ORDEN) - 1 and inventario_clases.get(_ORDEN[idx], 1) == 0:
+            idx += 1
+        target = _ORDEN[idx]
+        if target != clase:
+            if inventario_clases.get(target, 1) == 0:  # X también agotada
+                precio_final = round(tarifa_base * PRICE_CEILING_MULTIPLIER, 2)
+                multiplicador_final = PRICE_CEILING_MULTIPLIER
+            else:
+                multiplicador_final = _MIN_MULT[target]
+                precio_final = round(tarifa_base * multiplicador_final, 2)
+            clase = target
+            clamped = True
+
     return ResultadoPrecio(
         precio=round(precio_final, 2),
         multiplicador=round(multiplicador_final, 4),
-        clase=clasificar_boleto(multiplicador_final),
+        clase=clase,
         factores=factores,
         tarifa_base=tarifa_base,
         modelo=modelo,

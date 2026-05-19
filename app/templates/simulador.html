@@ -173,6 +173,20 @@
                     <div class="flex items-center gap-1 text-xs clase-P"><div class="w-3 h-3 rounded-sm badge-P border"></div> P</div>
                     <div class="flex items-center gap-1 text-xs clase-X"><div class="w-3 h-3 rounded-sm badge-X border"></div> X</div>
                 </div>
+                <div class="grid grid-cols-4 gap-1 mt-3">
+                    <template x-for="c in ['E','S','P','X']" :key="c">
+                        <div class="rounded-md px-2 py-1.5 text-center border transition-colors"
+                             :class="inventarioClases[c] === 0 ? 'bg-gray-100 border-gray-200' : 'bg-gray-50 border-fa-borde'">
+                            <p class="text-xs font-bold"
+                               :class="inventarioClases[c] === 0
+                                   ? 'text-gray-400 line-through'
+                                   : {'E':'text-blue-500','S':'text-green-600','P':'text-amber-500','X':'text-red-500'}[c]"
+                               x-text="c"></p>
+                            <p class="text-xs text-fa-muted mt-0.5"
+                               x-text="inventarioClases[c] + '/' + {E:13,S:19,P:9,X:4}[c]"></p>
+                        </div>
+                    </template>
+                </div>
             </div>
         </div>
 
@@ -406,6 +420,7 @@ function simulador() {
         ingresoTotal: 0,
         ingresoServicios: 0,
         vendiendo: false,
+        inventarioClases: { E: 13, S: 19, P: 9, X: 4 },
 
         nivelesOptions: [
             {key: 'valle', label: 'Valle', icon: '🌙'},
@@ -464,6 +479,7 @@ function simulador() {
                 nivel_demanda: this.config.nivel_demanda,
                 segmento: this.config.segmento,
                 modelo: this.config.modelo,
+                inventario_clases: JSON.stringify(this.inventarioClases),
             });
             const r = await fetch('/api/simulador/calcular?' + p);
             if (r.ok) this.resultado = await r.json();
@@ -485,6 +501,7 @@ function simulador() {
                         segmento: this.config.segmento,
                         modelo: this.config.modelo,
                         servicios_ids: [...this.serviciosSeleccionados],
+                        inventario_clases: {...this.inventarioClases},
                     })
                 });
                 if (r.ok) {
@@ -492,6 +509,7 @@ function simulador() {
                     this.ocupados++;
                     this.ingresoTotal += data.precio;
                     this.ingresoServicios += data.ingreso_servicios;
+                    if (this.inventarioClases[data.clase] > 0) this.inventarioClases[data.clase]--;
                     this.asientosPorBoleto.push({clase: data.clase, num: this.historial.length + 1});
                     this.historial.push({
                         num: this.historial.length + 1,
@@ -550,6 +568,7 @@ function simulador() {
                 this.historial = this.historial.filter(h => h.num !== boleto.num);
                 this.ingresoTotal -= boleto.precio;
                 this.ocupados--;
+                this.inventarioClases[boleto.clase]++;
                 const idx = this.asientosPorBoleto.findIndex(a => a.num === boleto.num);
                 if (idx >= 0) this.asientosPorBoleto.splice(idx, 1);
                 this.recalcular();
@@ -567,6 +586,7 @@ function simulador() {
             this.ingresoTotal = 0;
             this.ingresoServicios = 0;
             this.serviciosSeleccionados = [];
+            this.inventarioClases = { E: 13, S: 19, P: 9, X: 4 };
             this.recalcular();
             this._initChart();
             this.toast('Viaje reiniciado', 'info');

@@ -32,6 +32,7 @@ class VenderBoletoRequest(BaseModel):
     servicios_ids: list[str] = Field(default_factory=list)
     viaje_id: int | None = None
     escenario_id: int | None = None
+    inventario_clases: dict[str, int] | None = None
 
 
 class BoletoHistorialItem(BaseModel):
