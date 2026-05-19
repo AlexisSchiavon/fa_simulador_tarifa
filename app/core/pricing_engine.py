@@ -35,7 +35,7 @@ CLASE_THRESHOLDS = [
     ("X", 2.00, 3.50),   # Ejecutiva
 ]
 
-Modelo = Literal["hibrido", "aviacion", "flixbus"]
+Modelo = Literal["hibrido", "aviacion", "flixbus", "ado", "japi"]
 NivelDemanda = Literal["valle", "normal", "alta", "temporada"]
 Segmento = Literal["ocio", "negocios"]
 
@@ -263,12 +263,29 @@ def calcular_precio(
         f_lix = calcular_f_lix(dias_anticipacion, ocupacion, agresivo=True)
         multiplicador = f_ocu * f_lix
 
+    elif modelo == "ado":
+        # Anticipación + demanda + markup de marca; sin f_ocu, f_seg, f_lix
+        f_ocu = 1.00
+        f_ant = f_ant_raw
+        f_seg = 1.00
+        f_lix = 1.00
+        multiplicador = f_ant * f_dem * 1.05
+
+    elif modelo == "japi":
+        # Precio fijo "barato por diseño"; sin ningún factor dinámico
+        f_ocu = 1.00
+        f_ant = 1.00
+        f_dem = 1.00
+        f_seg = 1.00
+        f_lix = 1.00
+        multiplicador = 0.72
+
     else:
-        raise ValueError(f"Modelo desconocido: '{modelo}'. Válidos: hibrido, aviacion, flixbus")
+        raise ValueError(f"Modelo desconocido: '{modelo}'. Válidos: hibrido, aviacion, flixbus, ado, japi")
 
     precio_raw = tarifa_base * multiplicador
     p_min = tarifa_base * PRICE_FLOOR_MULTIPLIER
-    p_max = tarifa_base * PRICE_CEILING_MULTIPLIER
+    p_max = tarifa_base * (2.20 if modelo == "ado" else PRICE_CEILING_MULTIPLIER)
 
     clamped = precio_raw < p_min or precio_raw > p_max
     precio_final = max(p_min, min(p_max, precio_raw))

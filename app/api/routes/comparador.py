@@ -35,7 +35,7 @@ def _serializar_comparacion(resultados: dict) -> dict:
             "modelo": modelo,
             "ingreso_total": round(r.ingreso_boletos, 2),
             "ingreso_boletos": round(r.ingreso_boletos, 2),
-            "ingreso_servicios": round(r.ingreso_servicios, 2),
+            "ingreso_servicios": round(r.ingreso_servicios, 2) if modelo == "hibrido" else 0.0,
             "precio_promedio": round(r.precio_promedio, 2),
             "precio_minimo": round(r.precio_minimo, 2),
             "precio_maximo": round(r.precio_maximo, 2),
@@ -128,7 +128,7 @@ def comparar_desde_escenario(escenario_id: int, db: Session = Depends(get_db)):
 
     # Ejecutar la misma secuencia en los 3 modelos
     resultados_raw: dict[str, dict] = {}
-    for modelo in ("aviacion", "flixbus", "hibrido"):
+    for modelo in ("aviacion", "flixbus", "hibrido", "ado", "japi"):
         precios: list[float] = []
         ingreso_boletos = 0.0
 

@@ -5,7 +5,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-Modelo = Literal["hibrido", "aviacion", "flixbus"]
+Modelo = Literal["hibrido", "aviacion", "flixbus", "ado", "japi"]
 NivelDemanda = Literal["valle", "normal", "alta", "temporada"]
 Segmento = Literal["ocio", "negocios"]
 
@@ -123,4 +123,6 @@ class ModeloComparacionResponse(BaseModel):
 class ComparacionCompleta(BaseModel):
     aviacion: ModeloComparacionResponse
     flixbus: ModeloComparacionResponse
+    japi: ModeloComparacionResponse
+    ado: ModeloComparacionResponse
     hibrido: ModeloComparacionResponse

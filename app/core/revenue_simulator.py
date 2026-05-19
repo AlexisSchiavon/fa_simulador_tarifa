@@ -237,5 +237,5 @@ def simular_tres_modelos(
             precios_servicios=precios_servicios,
             seed=seed,
         )
-        for modelo in ("aviacion", "flixbus", "hibrido")
+        for modelo in ("aviacion", "flixbus", "hibrido", "ado", "japi")
     }

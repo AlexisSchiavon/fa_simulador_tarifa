@@ -156,6 +156,12 @@
                         <span class="inline-block w-6 border-t-2 border-dotted border-green-500"></span> Flixbus
                     </span>
                     <span class="flex items-center gap-1.5">
+                        <span class="inline-block w-6 border-t-2 border-dotted" style="border-color:#7C3AED"></span> JAPI
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <span class="inline-block w-6 border-t-2 border-dotted" style="border-color:#1C3557"></span> ADO
+                    </span>
+                    <span class="flex items-center gap-1.5">
                         <span class="inline-block w-6 border-t-2 border-fa-amarillo" style="border-width:3px"></span> Híbrido FA
                     </span>
                 </div>
@@ -164,8 +170,8 @@
         </div>
 
         <!-- 3 columnas de resultados -->
-        <div class="grid grid-cols-3 gap-4">
-            <template x-for="m in ['aviacion','flixbus','hibrido']" :key="m">
+        <div class="grid grid-cols-5 gap-4">
+            <template x-for="m in ['aviacion','flixbus','japi','ado','hibrido']" :key="m">
                 <div class="bg-white rounded-lg border transition-all"
                      :class="m === 'hibrido' ? 'border-fa-amarillo ring-1 ring-fa-amarillo shadow-sm' : 'border-fa-borde'">
                     <div class="p-4 border-b flex items-center justify-between"
@@ -212,6 +218,7 @@
                                x-show="m !== 'hibrido' && total('hibrido') < total(m)"
                                x-text="'Híbrido genera $' + formatMXN(total(m) - total('hibrido')) + ' menos'"></p>
                             <p x-show="m === 'hibrido'" class="text-xs text-fa-amarillo font-bold mt-1">Máximo ingreso ↑</p>
+                            <p x-show="m === 'japi'" class="text-xs font-medium mt-1" style="color:#7C3AED">Sin RM · precio fijo</p>
                         </div>
                     </div>
                 </div>
@@ -226,13 +233,15 @@
                         <th class="text-left px-4 py-3 font-medium text-fa-muted text-xs uppercase">Métrica</th>
                         <th class="text-right px-4 py-3 font-medium text-blue-600 text-xs uppercase">✈ Aviación</th>
                         <th class="text-right px-4 py-3 font-medium text-green-600 text-xs uppercase">🚌 Flixbus</th>
+                        <th class="text-right px-4 py-3 font-medium text-xs uppercase" style="color:#7C3AED">JAPI</th>
+                        <th class="text-right px-4 py-3 font-medium text-xs uppercase" style="color:#1C3557">ADO</th>
                         <th class="text-right px-4 py-3 font-medium text-yellow-600 text-xs uppercase bg-yellow-50">⭐ Híbrido FA</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-fa-borde">
                     <tr>
                         <td class="px-4 py-2.5 text-fa-muted text-sm">Ingreso boletos</td>
-                        <template x-for="m in ['aviacion','flixbus','hibrido']" :key="m">
+                        <template x-for="m in ['aviacion','flixbus','japi','ado','hibrido']" :key="m">
                             <td class="px-4 py-2.5 text-right font-semibold"
                                 :class="m === 'hibrido' ? 'bg-yellow-50 text-fa-oscuro' : 'text-fa-oscuro'"
                                 x-text="resultados ? '$' + formatMXN(resultados[m]?.ingreso_total || 0) : '—'"></td>
@@ -240,7 +249,7 @@
                     </tr>
                     <tr>
                         <td class="px-4 py-2.5 text-fa-muted text-sm">Ingreso servicios</td>
-                        <template x-for="m in ['aviacion','flixbus','hibrido']" :key="m">
+                        <template x-for="m in ['aviacion','flixbus','japi','ado','hibrido']" :key="m">
                             <td class="px-4 py-2.5 text-right"
                                 :class="m === 'hibrido' ? 'bg-yellow-50 text-fa-oscuro' : 'text-fa-muted'"
                                 x-text="resultados ? '$' + formatMXN(resultados[m]?.ingreso_servicios || 0) : '—'"></td>
@@ -248,7 +257,7 @@
                     </tr>
                     <tr class="font-bold">
                         <td class="px-4 py-2.5 text-fa-oscuro text-sm">TOTAL</td>
-                        <template x-for="m in ['aviacion','flixbus','hibrido']" :key="m">
+                        <template x-for="m in ['aviacion','flixbus','japi','ado','hibrido']" :key="m">
                             <td class="px-4 py-2.5 text-right text-base"
                                 :class="m === 'hibrido' ? 'bg-yellow-50 text-fa-oscuro' : 'text-fa-muted'"
                                 x-text="resultados ? '$' + formatMXN(total(m)) : '—'"></td>
@@ -256,7 +265,7 @@
                     </tr>
                     <tr>
                         <td class="px-4 py-2.5 text-fa-muted text-sm">Precio promedio</td>
-                        <template x-for="m in ['aviacion','flixbus','hibrido']" :key="m">
+                        <template x-for="m in ['aviacion','flixbus','japi','ado','hibrido']" :key="m">
                             <td class="px-4 py-2.5 text-right"
                                 :class="m === 'hibrido' ? 'bg-yellow-50 text-fa-oscuro' : 'text-fa-muted'"
                                 x-text="resultados ? '$' + formatMXN(resultados[m]?.precio_promedio || 0) : '—'"></td>
@@ -264,7 +273,7 @@
                     </tr>
                     <tr>
                         <td class="px-4 py-2.5 text-fa-muted text-sm">Precio máximo</td>
-                        <template x-for="m in ['aviacion','flixbus','hibrido']" :key="m">
+                        <template x-for="m in ['aviacion','flixbus','japi','ado','hibrido']" :key="m">
                             <td class="px-4 py-2.5 text-right"
                                 :class="m === 'hibrido' ? 'bg-yellow-50 text-fa-oscuro' : 'text-fa-muted'"
                                 x-text="resultados ? '$' + formatMXN(resultados[m]?.precio_maximo || 0) : '—'"></td>
@@ -278,6 +287,12 @@
                         <td class="px-4 py-2.5 text-right font-medium"
                             :class="total('hibrido') >= total('flixbus') ? 'text-green-600' : 'text-red-500'"
                             x-text="resultados ? (total('hibrido') >= total('flixbus') ? '−' : '+') + '$' + formatMXN(Math.abs(total('hibrido') - total('flixbus'))) : '—'"></td>
+                        <td class="px-4 py-2.5 text-right font-medium"
+                            :class="total('hibrido') >= total('japi') ? 'text-green-600' : 'text-red-500'"
+                            x-text="resultados ? (total('hibrido') >= total('japi') ? '−' : '+') + '$' + formatMXN(Math.abs(total('hibrido') - total('japi'))) : '—'"></td>
+                        <td class="px-4 py-2.5 text-right font-medium"
+                            :class="total('hibrido') >= total('ado') ? 'text-green-600' : 'text-red-500'"
+                            x-text="resultados ? (total('hibrido') >= total('ado') ? '−' : '+') + '$' + formatMXN(Math.abs(total('hibrido') - total('ado'))) : '—'"></td>
                         <td class="px-4 py-2.5 text-right text-fa-amarillo font-bold bg-yellow-50">Referencia ★</td>
                     </tr>
                 </tbody>
@@ -338,7 +353,7 @@ function comparador() {
         },
 
         modeloLabel(m) {
-            return {'aviacion':'✈ Aviación Puro','flixbus':'🚌 Flixbus Puro','hibrido':'⭐ Híbrido FA'}[m] || m;
+            return {'aviacion':'✈ Aviación Puro','flixbus':'🚌 Flixbus Puro','hibrido':'⭐ Híbrido FA','ado':'ADO','japi':'JAPI'}[m] || m;
         },
 
         total(m) {
@@ -406,11 +421,15 @@ function comparador() {
             const av = this.resultados.aviacion?.serie_precios || [];
             const fl = this.resultados.flixbus?.serie_precios || [];
             const hy = this.resultados.hibrido?.serie_precios || [];
+            const ad = this.resultados.ado?.serie_precios || [];
+            const jp = this.resultados.japi?.serie_precios || [];
             const xs = hy.map((_, i) => i + 1);
 
             Plotly.react('chart-comp', [
                 {x: xs, y: av, name: 'Aviación',   line: {color:'#378ADD', width:2, dash:'dash'},  mode: 'lines+markers', marker: {size:5, color:'#378ADD'}},
                 {x: xs, y: fl, name: 'Flixbus',    line: {color:'#639922', width:2, dash:'dot'},   mode: 'lines+markers', marker: {size:5, color:'#639922'}},
+                {x: xs, y: jp, name: 'JAPI',       line: {color:'#7C3AED', width:2, dash:'dot'},   mode: 'lines+markers', marker: {size:5, color:'#7C3AED'}},
+                {x: xs, y: ad, name: 'ADO',        line: {color:'#1C3557', width:2, dash:'dot'},   mode: 'lines+markers', marker: {size:5, color:'#1C3557'}},
                 {x: xs, y: hy, name: 'Híbrido FA', line: {color:'#FFB800', width:3},               mode: 'lines+markers', marker: {size:7, color:'#FFB800', line:{color:'#fff', width:1}}},
             ], {
                 margin: {t:10, r:10, b:40, l:70},
