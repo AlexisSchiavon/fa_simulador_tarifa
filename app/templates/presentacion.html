@@ -62,7 +62,19 @@
     <main class="flex-1 min-h-0 px-8 py-5 flex flex-col">
 
         <!-- ── ACTO 1: Llenado del bus ── -->
-        <div x-show="acto === 0" class="flex-1 min-h-0 flex flex-col slide-in">
+        <div x-show="acto === 0" class="flex-1 min-h-0 flex flex-col slide-in relative">
+            <!-- Tooltip add-on flotante -->
+            <div x-show="addon_actual"
+                 class="absolute top-16 left-5 z-20 bg-fa-amarillo text-fa-oscuro rounded-xl p-4 shadow-2xl pointer-events-none"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-end="opacity-0">
+                <p class="text-xs font-bold uppercase tracking-wide mb-1">⭐ Add-on vendido</p>
+                <p class="text-base font-black" x-text="addon_actual?.nombre"></p>
+                <p class="text-sm font-bold" x-text="'+ $' + (addon_actual?.precio||0).toLocaleString('es-MX')"></p>
+            </div>
             <div class="mb-4">
                 <h2 class="text-3xl font-extrabold text-white">El precio sube con la ocupación</h2>
                 <p class="text-fa-muted text-sm mt-1">Factor f_ocu — tarifa base $380 · Ruta León → Querétaro</p>
@@ -84,7 +96,12 @@
                     <div class="bg-fa-surface border border-fa-borde rounded-xl p-5 text-center">
                         <p class="text-fa-muted text-xs uppercase tracking-wide mb-1">Precio actual</p>
                         <p class="text-4xl font-black text-white transition-all" x-text="'$' + precio_a1.toLocaleString('es-MX',{maximumFractionDigits:0})"></p>
-                        <p class="text-fa-muted text-xs mt-1" x-text="'×' + mult_a1.toFixed(3) + ' multiplicador'"></p>
+                        <div class="flex items-center justify-center gap-2 mt-1.5">
+                            <span class="text-xs px-2 py-0.5 rounded font-bold"
+                                  :class="{'E':'bg-blue-900 text-blue-300','S':'bg-green-900 text-green-300','P':'bg-yellow-900 text-yellow-300','X':'bg-red-900 text-red-300'}[clase_a1]"
+                                  x-text="'Clase ' + (clase_a1||'—')"></span>
+                            <span class="text-fa-muted text-xs" x-text="'×' + mult_a1.toFixed(3)"></span>
+                        </div>
                     </div>
                     <div class="bg-fa-surface border border-fa-borde rounded-xl p-5 text-center">
                         <p class="text-fa-muted text-xs uppercase tracking-wide mb-1">Clase tarifaria</p>
@@ -93,6 +110,12 @@
                            x-text="clase_a1 || '—'"></p>
                         <p class="text-fa-muted text-xs mt-1"
                            x-text="{'E':'Económica','S':'Estándar','P':'Plus','X':'Ejecutiva'}[clase_a1] || ''"></p>
+                    </div>
+                    <div class="bg-fa-surface border border-opacity-40 rounded-xl p-4 text-center" style="border-color:#FFB800">
+                        <p class="text-fa-muted text-xs uppercase tracking-wide mb-1">Ing. Servicios</p>
+                        <p class="text-2xl font-black text-fa-amarillo"
+                           x-text="'$' + ingreso_servicios_a1.toLocaleString('es-MX',{maximumFractionDigits:0})"></p>
+                        <p class="text-fa-muted text-xs mt-1">add-ons acumulados</p>
                     </div>
                 </div>
             </div>
@@ -118,7 +141,7 @@
                 <div class="bg-fa-surface border border-fa-borde rounded-2xl p-8 flex flex-col items-center justify-center">
                     <p class="text-fa-muted text-sm mb-3">Sin descuento (tarifa base × f_ant alto)</p>
                     <p class="text-5xl font-black text-fa-muted line-through mb-6" x-text="'$' + flix_sin.toLocaleString('es-MX',{maximumFractionDigits:0})"></p>
-                    <p class="text-fa-muted text-sm mb-2">Con f_lix activo (−28%)</p>
+                    <p class="text-fa-muted text-sm mb-2" x-text="'Con f_lix activo (−' + (flix_sin > 0 ? Math.round((1 - flix_con/flix_sin)*100) : 28) + '%)'"></p>
                     <p class="text-7xl font-black text-clase-E" x-text="'$' + flix_con.toLocaleString('es-MX',{maximumFractionDigits:0})"></p>
                     <div class="mt-6 px-6 py-3 bg-clase-E bg-opacity-10 border border-clase-E border-opacity-30 rounded-xl text-center">
                         <p class="text-clase-E font-bold text-lg">f_lix = 0.72</p>
@@ -161,15 +184,18 @@
         <!-- ── ACTO 3: Comparación final ── -->
         <div x-show="acto === 2" class="flex-1 min-h-0 flex flex-col slide-in">
             <div class="mb-4">
-                <h2 class="text-3xl font-extrabold text-white">Resultado: Híbrido FA supera a los modelos puros</h2>
+                <h2 class="text-3xl font-extrabold text-white">Resultado: Híbrido FA supera a todos los modelos</h2>
                 <p class="text-fa-muted text-sm mt-1">
                     Misma secuencia · 20 boletos · Ruta R1 León → Querétaro ·
                     <span x-show="cargando_comp" class="text-fa-amarillo">calculando...</span>
-                    <span x-show="!cargando_comp" class="text-green-400">datos reales del motor</span>
+                    <span x-show="!cargando_comp && modelos_comp.some(m=>m.total>0)" class="text-green-400">
+                        +$<span x-text="Math.round((modelos_comp.find(m=>m.key==='hibrido')?.total||0)-(modelos_comp.find(m=>m.key==='ado')?.total||0)).toLocaleString('es-MX')"></span> vs ADO ·
+                        +$<span x-text="Math.round((modelos_comp.find(m=>m.key==='hibrido')?.total||0)-(modelos_comp.find(m=>m.key==='japi')?.total||0)).toLocaleString('es-MX')"></span> vs JAPI
+                    </span>
                 </p>
             </div>
 
-            <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="grid grid-cols-5 gap-4 mb-4">
                 <template x-for="m in modelos_comp" :key="m.key">
                     <div class="rounded-xl p-5 border transition-all"
                          :class="m.key === 'hibrido' ? 'bg-fa-amarillo bg-opacity-10 border-fa-amarillo' : 'bg-fa-surface border-fa-borde'">
@@ -237,17 +263,30 @@ function presentacion() {
         serie_nums_a1: [],
         serie_precios_a1: [],
         clases_a1: [],
+        ingreso_servicios_a1: 0,
+        addon_actual: null,
+        serie_addons_a1: [],
         _intervalo: null,
+        _ADDONS: [
+            {nombre:'Zona Ejecutiva', precio:134},
+            {nombre:'Zona Reservada', precio:127},
+            {nombre:'Taxi Destino',   precio:160},
+            {nombre:'Mascota',        precio:243},
+            {nombre:'Casillero',      precio:85},
+        ],
 
         // Acto 2
-        flix_sin: 627,   // 380 × 1.65
-        flix_con: 274,   // 380 × 0.72
+        flix_sin: 627,   // 380 × 1.65 (fallback)
+        flix_con: 274,   // 380 × 0.72 (fallback)
+        cargando_a2: false,
 
         // Acto 3
         cargando_comp: false,
         modelos_comp: [
-            {key:'aviacion', label:'✈ Aviación Puro', total:0, boletos:0, servicios:0, serie:[]},
             {key:'flixbus',  label:'🚌 Flixbus Puro',  total:0, boletos:0, servicios:0, serie:[]},
+            {key:'japi',     label:'JAPI',              total:0, boletos:0, servicios:0, serie:[]},
+            {key:'ado',      label:'ADO',               total:0, boletos:0, servicios:0, serie:[]},
+            {key:'aviacion', label:'✈ Aviación Puro',  total:0, boletos:0, servicios:0, serie:[]},
             {key:'hibrido',  label:'⭐ Híbrido FA',    total:0, boletos:0, servicios:0, serie:[]},
         ],
 
@@ -264,7 +303,7 @@ function presentacion() {
             clearInterval(this._intervalo);
             this.acto = n;
             if (n === 0) this._iniciarActo1();
-            if (n === 1) { /* estático */ }
+            if (n === 1) this._iniciarActo2();
             if (n === 2) this._iniciarActo3();
         },
 
@@ -272,7 +311,7 @@ function presentacion() {
             clearInterval(this._intervalo);
             if (this.acto < 2) {
                 this.acto++;
-                if (this.acto === 1) { /* estático */ }
+                if (this.acto === 1) this._iniciarActo2();
                 if (this.acto === 2) this._iniciarActo3();
             } else {
                 this.acto = 0;
@@ -285,6 +324,7 @@ function presentacion() {
             if (this.acto > 0) {
                 this.acto--;
                 if (this.acto === 0) this._iniciarActo1();
+                if (this.acto === 1) this._iniciarActo2();
             }
         },
 
@@ -297,6 +337,9 @@ function presentacion() {
             this.serie_nums_a1 = [];
             this.serie_precios_a1 = [];
             this.clases_a1 = [];
+            this.ingreso_servicios_a1 = 0;
+            this.addon_actual = null;
+            this.serie_addons_a1 = [];
             this.corriendo = true;
             this.$nextTick(() => this._renderActo1());
 
@@ -317,6 +360,7 @@ function presentacion() {
                         this.serie_nums_a1.push(this.ocupados_a1);
                         this.serie_precios_a1.push(d.precio);
                         this.clases_a1.push(d.clase);
+                        this._checkAddon();
                         this._renderActo1();
                     }
                 } catch(e) {
@@ -328,28 +372,73 @@ function presentacion() {
                     this.serie_nums_a1.push(this.ocupados_a1);
                     this.serie_precios_a1.push(precio);
                     this.clases_a1.push(this.clase_a1);
+                    this._checkAddon();
                     this._renderActo1();
                 }
             };
             this._intervalo = setInterval(step, 500);
         },
 
+        _checkAddon() {
+            if (this.ocupados_a1 % 4 !== 0) return;
+            const addon = this._ADDONS[Math.floor(Math.random() * this._ADDONS.length)];
+            this.ingreso_servicios_a1 += addon.precio;
+            this.serie_addons_a1.push({num: this.ocupados_a1, precio: addon.precio, nombre: addon.nombre});
+            this.addon_actual = addon;
+            setTimeout(() => { this.addon_actual = null; }, 2000);
+        },
+
         _renderActo1() {
             const colores = this.clases_a1.map(c => ({'E':'#60A5FA','S':'#4ADE80','P':'#FCD34D','X':'#F87171'}[c]||'#94A3B8'));
-            Plotly.react('chart-acto1', [{
-                x: this.serie_nums_a1,
-                y: this.serie_precios_a1,
-                mode: 'lines+markers',
-                line: {color:'#FFB800', width:3},
-                marker: {color:colores, size:9, line:{color:'#0D1520',width:1.5}},
-                hovertemplate:'Boleto #%{x}<br>$%{y:,.0f}<extra></extra>',
-            }], {
+            const addonNums   = this.serie_addons_a1.map(a => a.num);
+            const addonPrecios = this.serie_addons_a1.map(a => {
+                const idx = this.serie_nums_a1.indexOf(a.num);
+                return idx >= 0 ? this.serie_precios_a1[idx] : 0;
+            });
+            const addonTexts  = this.serie_addons_a1.map(a => a.nombre + ' +$' + a.precio);
+            Plotly.react('chart-acto1', [
+                {
+                    x: this.serie_nums_a1, y: this.serie_precios_a1,
+                    mode: 'lines+markers', name: 'Precio',
+                    line: {color:'#FFB800', width:3},
+                    marker: {color:colores, size:9, line:{color:'#0D1520',width:1.5}},
+                    hovertemplate:'Boleto #%{x}<br>$%{y:,.0f}<extra></extra>',
+                },
+                {
+                    x: addonNums, y: addonPrecios,
+                    mode: 'markers', name: 'Add-on',
+                    text: addonTexts,
+                    marker: {symbol:'star', size:20, color:'#FFB800', line:{color:'#0D1520',width:2}},
+                    hovertemplate:'%{text}<extra></extra>',
+                },
+            ], {
                 margin:{t:10,r:10,b:40,l:75},
                 xaxis:{title:'Asiento vendido',tickfont:{size:11,color:'#94A3B8'},gridcolor:'#1E3048',zerolinecolor:'#1E3048'},
                 yaxis:{title:'Precio MXN',tickformat:',.0f',tickfont:{size:11,color:'#94A3B8'},gridcolor:'#1E3048',zerolinecolor:'#1E3048'},
                 plot_bgcolor:'#162030', paper_bgcolor:'#162030',
                 font:{color:'#94A3B8'},
             }, {responsive:true, displayModeBar:false});
+        },
+
+        // Acto 2: precios reales del engine
+        async _iniciarActo2() {
+            this.cargando_a2 = true;
+            try {
+                const base = {tarifa_base:380, ocupacion:0.45, nivel_demanda:'normal', segmento:'ocio', modelo:'hibrido'};
+                const [r1, r2] = await Promise.all([
+                    fetch('/api/simulador/calcular?' + new URLSearchParams({...base, dias_anticipacion:1})),
+                    fetch('/api/simulador/calcular?' + new URLSearchParams({...base, dias_anticipacion:0})),
+                ]);
+                if (r1.ok && r2.ok) {
+                    const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
+                    this.flix_sin = d1.precio;
+                    this.flix_con = d2.precio;
+                }
+            } catch(e) {
+                // fallback — mantiene 627 / 274 hardcodeados
+            } finally {
+                this.cargando_a2 = false;
+            }
         },
 
         // Acto 3: datos reales del comparador
@@ -364,9 +453,11 @@ function presentacion() {
                 if (r.ok) {
                     const data = await r.json();
                     this.modelos_comp = [
-                        {key:'aviacion', label:'✈ Aviación Puro',  total:data.aviacion.ingreso_total+data.aviacion.ingreso_servicios,  boletos:data.aviacion.ingreso_boletos,  servicios:data.aviacion.ingreso_servicios,  serie:data.aviacion.serie_precios},
-                        {key:'flixbus',  label:'🚌 Flixbus Puro',   total:data.flixbus.ingreso_total+data.flixbus.ingreso_servicios,   boletos:data.flixbus.ingreso_boletos,   servicios:data.flixbus.ingreso_servicios,   serie:data.flixbus.serie_precios},
-                        {key:'hibrido',  label:'⭐ Híbrido FA',     total:data.hibrido.ingreso_total+data.hibrido.ingreso_servicios,   boletos:data.hibrido.ingreso_boletos,   servicios:data.hibrido.ingreso_servicios,   serie:data.hibrido.serie_precios},
+                        {key:'flixbus',  label:'🚌 Flixbus Puro',  total:data.flixbus.ingreso_total+data.flixbus.ingreso_servicios,   boletos:data.flixbus.ingreso_boletos,   servicios:data.flixbus.ingreso_servicios,   serie:data.flixbus.serie_precios},
+                        {key:'japi',     label:'JAPI',              total:data.japi.ingreso_total+data.japi.ingreso_servicios,         boletos:data.japi.ingreso_boletos,       servicios:data.japi.ingreso_servicios,       serie:data.japi.serie_precios},
+                        {key:'ado',      label:'ADO',               total:data.ado.ingreso_total+data.ado.ingreso_servicios,           boletos:data.ado.ingreso_boletos,         servicios:data.ado.ingreso_servicios,         serie:data.ado.serie_precios},
+                        {key:'aviacion', label:'✈ Aviación Puro',  total:data.aviacion.ingreso_total+data.aviacion.ingreso_servicios,  boletos:data.aviacion.ingreso_boletos,   servicios:data.aviacion.ingreso_servicios,   serie:data.aviacion.serie_precios},
+                        {key:'hibrido',  label:'⭐ Híbrido FA',    total:data.hibrido.ingreso_total+data.hibrido.ingreso_servicios,   boletos:data.hibrido.ingreso_boletos,    servicios:data.hibrido.ingreso_servicios,    serie:data.hibrido.serie_precios},
                     ];
                     this.$nextTick(() => this._renderActo3());
                 }
@@ -381,10 +472,14 @@ function presentacion() {
             const avSerie = this.modelos_comp.find(m=>m.key==='aviacion')?.serie || [];
             const flSerie = this.modelos_comp.find(m=>m.key==='flixbus')?.serie || [];
             const hySerie = this.modelos_comp.find(m=>m.key==='hibrido')?.serie || [];
-            const xs = avSerie.map((_,i)=>i+1);
+            const adSerie = this.modelos_comp.find(m=>m.key==='ado')?.serie  || [];
+            const jpSerie = this.modelos_comp.find(m=>m.key==='japi')?.serie || [];
+            const xs = (hySerie.length ? hySerie : avSerie).map((_,i)=>i+1);
             Plotly.react('chart-acto3', [
-                {x:xs, y:avSerie, name:'Aviación',  line:{color:'#60A5FA',width:2,dash:'dash'}, mode:'lines+markers', marker:{size:6}},
                 {x:xs, y:flSerie, name:'Flixbus',   line:{color:'#4ADE80',width:2,dash:'dot'},  mode:'lines+markers', marker:{size:6}},
+                {x:xs, y:jpSerie, name:'JAPI',      line:{color:'#7C3AED',width:2,dash:'dot'},  mode:'lines+markers', marker:{size:6}},
+                {x:xs, y:adSerie, name:'ADO',       line:{color:'#1C3557',width:2,dash:'dot'},  mode:'lines+markers', marker:{size:6}},
+                {x:xs, y:avSerie, name:'Aviación',  line:{color:'#60A5FA',width:2,dash:'dash'}, mode:'lines+markers', marker:{size:6}},
                 {x:xs, y:hySerie, name:'Híbrido FA', line:{color:'#FFB800',width:3},            mode:'lines+markers', marker:{size:8,symbol:'circle',line:{color:'#0D1520',width:1}}},
             ], {
                 margin:{t:10,r:10,b:40,l:75},
